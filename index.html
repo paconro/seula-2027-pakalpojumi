@@ -299,7 +299,10 @@
 
       data.forEach(item => {
         const name = getFieldValue(item, ['vārds', 'uzvārds', 'nombre', 'name']) || Object.values(item)[1] || 'Jaunietis';
-        const ageRaw = getFieldValue(item, ['vecums', 'edad', 'age', 'gadi']);
+        
+        // Búsqueda ampliada para la edad (vecums, gadu, cik, gads, edad, age, vec)
+        const ageRaw = getFieldValue(item, ['vecums', 'gadu', 'cik', 'gads', 'edad', 'age', 'vec']);
+        
         const phone = getFieldValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone', 'numurs', 'mob', 'telefon']);
         const email = getFieldValue(item, ['e-pasts', 'epasts', 'mail', 'pasta']);
         const location = getFieldValue(item, ['apkaime', 'pilsēta', 'zona', 'vieta']) || 'Rīga';
@@ -320,7 +323,7 @@
 
         const serviceList = categoriesRaw ? categoriesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
 
-        // Formatear edad
+        // Formatear edad correctamente con la palabra 'gadi' o 'gads'
         let ageDisplay = '';
         if (ageRaw) {
           const cleanAge = ageRaw.replace(/[^0-9]/g, '');
