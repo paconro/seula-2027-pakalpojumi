@@ -269,6 +269,22 @@
       return '';
     }
 
+    function toggleDescription(btn) {
+      const container = btn.previousElementSibling;
+      const shortText = container.querySelector('.short-text');
+      const fullText = container.querySelector('.full-text');
+      
+      if (fullText.classList.contains('hidden')) {
+        shortText.classList.add('hidden');
+        fullText.classList.remove('hidden');
+        btn.innerHTML = 'Aizvērt <i class="fa-solid fa-chevron-up text-[10px]"></i>';
+      } else {
+        shortText.classList.remove('hidden');
+        fullText.classList.add('hidden');
+        btn.innerHTML = 'Skatīt vairāk <i class="fa-solid fa-chevron-down text-[10px]"></i>';
+      }
+    }
+
     function renderProfiles(data) {
       const container = document.getElementById('profilesGrid');
       const noResults = document.getElementById('noResults');
@@ -283,6 +299,7 @@
 
       data.forEach(item => {
         const name = getFieldValue(item, ['vārds', 'uzvārds', 'nombre', 'name']) || Object.values(item)[1] || 'Jaunietis';
+        const ageRaw = getFieldValue(item, ['vecums', 'edad', 'age', 'gadi']);
         const phone = getFieldValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone', 'numurs', 'mob', 'telefon']);
         const email = getFieldValue(item, ['e-pasts', 'epasts', 'mail', 'pasta']);
         const location = getFieldValue(item, ['apkaime', 'pilsēta', 'zona', 'vieta']) || 'Rīga';
@@ -303,9 +320,23 @@
 
         const serviceList = categoriesRaw ? categoriesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
 
+        // Formatear edad
+        let ageDisplay = '';
+        if (ageRaw) {
+          const cleanAge = ageRaw.replace(/[^0-9]/g, '');
+          if (cleanAge) {
+            ageDisplay = cleanAge === '1' ? `${cleanAge} gads` : `${cleanAge} gadi`;
+          } else {
+            ageDisplay = ageRaw;
+          }
+        }
+
         const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : '';
         const telLink = cleanPhone ? `tel:+${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : (phone ? `tel:${phone}` : '');
+
+        const isLongDesc = description && description.length > 130;
+        const shortDesc = isLongDesc ? description.substring(0, 130) + '...' : description;
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition';
@@ -321,7 +352,7 @@
               <div>
                 <h3 class="font-bold text-xl text-seoulDark leading-tight">${name}</h3>
                 <p class="text-sm text-seoulBlue font-medium flex items-center gap-1.5 mt-1">
-                  <i class="fa-solid fa-location-dot"></i> ${location}
+                  <i class="fa-solid fa-location-dot"></i> ${location} ${ageDisplay ? `• ${ageDisplay}` : ''}
                 </p>
               </div>
             </div>
@@ -340,11 +371,19 @@
               </div>
             ` : ''}
 
-            <!-- DESCRIPCIÓN DETALLADA -->
+            <!-- DESCRIPCIÓN CON BOTÓN VER MÁS -->
             ${description ? `
               <div class="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Apraksts un prasmes:</span>
-                <p class="text-sm md:text-base text-gray-700 leading-relaxed">${description}</p>
+                <div class="desc-container text-sm md:text-base text-gray-700 leading-relaxed">
+                  <span class="short-text">${shortDesc}</span>
+                  ${isLongDesc ? `<span class="full-text hidden">${description}</span>` : ''}
+                </div>
+                ${isLongDesc ? `
+                  <button onclick="toggleDescription(this)" class="mt-2 text-xs font-bold text-seoulBlue hover:underline focus:outline-none flex items-center gap-1">
+                    Skatīt vairāk <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                  </button>
+                ` : ''}
               </div>
             ` : ''}
 
