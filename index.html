@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rīgas jaunieši ceļā uz Seulu 2027 | Pakalpojumi</title>
+  
+  <!-- Tailwind CSS CDN para un diseño moderno y fluido en móvil -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome para Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Papaparse para leer el CSV de Google Sheets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            seoulRed: '#F32B3A',
+            seoulBlue: '#0B5ED7',
+            seoulYellow: '#FDE047',
+            seoulDark: '#111111',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F8FAFC; color: #111111; font-family: system-ui, -apple-system, sans-serif; }
+    .badge-active { background-color: #0B5ED7 !important; color: white !important; }
+  </style>
+</head>
+<body class="pb-12">
+
+  <!-- CABECERA / HERO SECTION -->
+  <header class="bg-white border-b border-gray-200 shadow-sm relative overflow-hidden">
+    <div class="h-2 bg-gradient-to-r from-seoulRed via-seoulYellow to-seoulBlue"></div>
+    <div class="max-w-4xl mx-auto px-4 py-8 text-center">
+      
+      <!-- LOGO -->
+      <div class="flex justify-center mb-4">
+        <img src="./assets/logo-jmj.png" alt="WYD Seoul 2027 Logo" class="h-24 object-contain" onerror="this.style.display='none'">
+      </div>
+
+      <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-seoulDark mb-2">
+        Rīgas jaunieši ceļā uz Seulu 2027
+      </h1>
+      <p class="text-sm md:text-base text-gray-600 max-w-2xl mx-auto mb-4">
+        Rīgas Svētā Alberta draudzes un misijas "Ad gentes" jauniešu iniciatīva, vācot līdzekļus dalībai Pasaules Jauniešu dienās Dienvidkorejā.
+      </p>
+
+      <div class="bg-red-50 border border-seoulRed/30 rounded-xl p-4 max-w-xl mx-auto mb-6">
+        <p class="text-seoulRed font-semibold text-base md:text-lg">
+          "Atrodi palīgu ikdienas darbos un atbalsti mūsu jauniešus ceļā uz Seulu!"
+        </p>
+      </div>
+
+      <!-- INSTRUCCIONES RÁPIDAS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left max-w-2xl mx-auto text-xs md:text-sm text-gray-700">
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start gap-2">
+          <span class="bg-seoulBlue text-white font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">1</span>
+          <span><strong>Izvēlies pakalpojumu:</strong> Apskati piedāvātās prasmes un darbus.</span>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start gap-2">
+          <span class="bg-seoulBlue text-white font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">2</span>
+          <span><strong>Sazinies tieši:</strong> Zani pa tālruni vai raksti WhatsApp.</span>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start gap-2">
+          <span class="bg-seoulBlue text-white font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">3</span>
+          <span><strong>Atbalsti mērķi:</strong> Tavs ziedojums palīdz segt ceļa izdevumus.</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL Y FILTROS -->
+  <main class="max-w-4xl mx-auto px-4 mt-8">
+
+    <!-- BUSCADOR Y FILTROS -->
+    <div class="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-200 mb-8 space-y-4">
+      
+      <!-- Buscador por texto -->
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+        <input type="text" id="searchInput" oninput="filterData()" placeholder="Meklēt pēc vārda, prasmēm vai pilsētas/apkaimes..." 
+               class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-seoulBlue text-sm">
+      </div>
+
+      <!-- Filtro por Categorías -->
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pakalpojumu kategorijas:</label>
+        <div id="categoryContainer" class="flex flex-wrap gap-2">
+          <button onclick="setCategory('Visi')" class="cat-btn badge-active px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Visi</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TARJETAS DE JÓVENES -->
+    <div id="loading" class="text-center py-12">
+      <i class="fa-solid fa-spinner fa-spin text-3xl text-seoulBlue mb-2"></i>
+      <p class="text-gray-500 text-sm">Ielādē datus no Google Sheets...</p>
+    </div>
+
+    <div id="profilesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+      <!-- Las tarjetas se generan dinámicamente con JavaScript -->
+    </div>
+
+    <div id="noResults" class="hidden text-center py-12 text-gray-500">
+      <i class="fa-solid fa-user-slash text-4xl mb-3 text-gray-300"></i>
+      <p>Netika atrasts neviens jaunietis pēc izvēlētajiem kritērijiem.</p>
+    </div>
+
+  </main>
+
+  <!-- LÓGICA JAVASCRIPT -->
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRB9zRZ9YSJ4CTVYac0j1SNJQDNnwJ-T7DHtZLG_vQBTS5zd-XZh5ZneYi0ZPlgUHSmVoL-RjlU2fRO/pub?output=csv";
+    
+    let allData = [];
+    let selectedCategory = 'Visi';
+
+    // Cargar datos del CSV
+    window.addEventListener('DOMContentLoaded', () => {
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          allData = results.data;
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('profilesGrid').classList.remove('hidden');
+          setupCategories();
+          renderProfiles(allData);
+        },
+        error: function(err) {
+          document.getElementById('loading').innerHTML = '<p class="text-red-500">Kļūda ielādējot datus. Lūdzu, pārbaudiet saiti.</p>';
+        }
+      });
+    });
+
+    // Extraer categorías únicas
+    function setupCategories() {
+      const categoriesSet = new Set();
+      allData.forEach(row => {
+        // Busca cualquier columna que contenga la palabra kategorij
+        Object.keys(row).forEach(key => {
+          if (key.toLowerCase().includes('kategorij') && row[key]) {
+            row[key].split(',').forEach(c => categoriesSet.add(c.trim()));
+          }
+        });
+      });
+
+      const container = document.getElementById('categoryContainer');
+      categoriesSet.forEach(cat => {
+        if(cat) {
+          const btn = document.createElement('button');
+          btn.className = 'cat-btn px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition';
+          btn.textContent = cat;
+          btn.onclick = () => setCategory(cat);
+          container.appendChild(btn);
+        }
+      });
+    }
+
+    function setCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.textContent === cat) {
+          btn.classList.add('badge-active');
+        } else {
+          btn.classList.remove('badge-active');
+        }
+      });
+      filterData();
+    }
+
+    // Filtrar perfiles
+    function filterData() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      
+      const filtered = allData.filter(item => {
+        const fullText = Object.values(item).join(' ').toLowerCase();
+        const matchesQuery = fullText.includes(query);
+
+        let matchesCat = false;
+        if (selectedCategory === 'Visi') {
+          matchesCat = true;
+        } else {
+          Object.keys(item).forEach(key => {
+            if (key.toLowerCase().includes('kategorij') && item[key] && item[key].includes(selectedCategory)) {
+              matchesCat = true;
+            }
+          });
+        }
+
+        return matchesQuery && matchesCat;
+      });
+
+      renderProfiles(filtered);
+    }
+
+    // Renderizar Tarjetas
+    function renderProfiles(data) {
+      const container = document.getElementById('profilesGrid');
+      const noResults = document.getElementById('noResults');
+      container.innerHTML = '';
+
+      if (data.length === 0) {
+        noResults.classList.remove('hidden');
+        return;
+      } else {
+        noResults.classList.add('hidden');
+      }
+
+      data.forEach(item => {
+        // Mapeo flexible de columnas por palabras clave
+        const name = findValue(item, ['vārds', 'uzvārds', 'nombre']) || 'Jaunietis';
+        const phone = findValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone']) || '';
+        const email = findValue(item, ['e-pasts', 'epasts', 'mail']) || '';
+        const location = findValue(item, ['apkaime', 'pilsēta', 'zona']) || 'Rīga';
+        const description = findValue(item, ['apraksts', 'prasme', 'darb']) || '';
+        const photoUrl = findValue(item, ['foto', 'bilde', 'saite']) || '';
+        const languages = findValue(item, ['valod', 'idiomas']) || '';
+        const availability = findValue(item, ['pieejamīb', 'laiks']) || '';
+
+        // Limpiar número para WhatsApp
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : '#';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-4 mb-4">
+              <img src="${photoUrl || 'https://via.placeholder.com/150/0B5ED7/FFFFFF?text=Seula+2027'}" 
+                   alt="${name}" 
+                   class="w-16 h-16 rounded-full object-cover border-2 border-seoulYellow flex-shrink-0"
+                   onerror="this.src='https://via.placeholder.com/150/0B5ED7/FFFFFF?text=Seula+2027'">
+              <div>
+                <h3 class="font-bold text-lg text-seoulDark leading-tight">${name}</h3>
+                <p class="text-xs text-seoulBlue font-medium flex items-center gap-1 mt-1">
+                  <i class="fa-solid fa-location-dot"></i> ${location}
+                </p>
+              </div>
+            </div>
+
+            ${description ? `<p class="text-xs md:text-sm text-gray-600 mb-3 bg-gray-50 p-3 rounded-xl border border-gray-100">${description}</p>` : ''}
+
+            <div class="space-y-1 mb-4 text-xs text-gray-500">
+              ${languages ? `<p><strong class="text-gray-700">Valodas:</strong> ${languages}</p>` : ''}
+              ${availability ? `<p><strong class="text-gray-700">Pieejamība:</strong> ${availability}</p>` : ''}
+            </div>
+          </div>
+
+          <!-- BOTONES DE CONTACTO -->
+          <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 mt-2">
+            ${phone ? `
+              <a href="tel:${phone}" class="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                <i class="fa-solid fa-phone text-seoulBlue"></i> Zvanīt
+              </a>
+            ` : ''}
+            ${phone ? `
+              <a href="${waLink}" target="_blank" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+              </a>
+            ` : ''}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function findValue(row, keywords) {
+      for (const key of Object.keys(row)) {
+        for (const kw of keywords) {
+          if (key.toLowerCase().includes(kw.toLowerCase())) {
+            return row[key];
+          }
+        }
+      }
+      return '';
+    }
+  </script>
+</body>
+</html>
