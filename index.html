@@ -56,7 +56,7 @@
         </p>
       </div>
 
-      <!-- INSTRUCCIONES Y NOTA SOBRE PRECIOS/CONTACTO -->
+      <!-- INSTRUCCIONES -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left max-w-2xl mx-auto text-sm text-gray-700 mb-6">
         <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-start gap-2.5">
           <span class="bg-seoulBlue text-white font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">1</span>
@@ -64,7 +64,7 @@
         </div>
         <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-start gap-2.5">
           <span class="bg-seoulBlue text-white font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">2</span>
-          <span><strong>Sazinies tieši:</strong> Zani, raksti WhatsApp vai sūti e-pastu.</span>
+          <span><strong>Sazinies tieši:</strong> Zvani, raksti WhatsApp vai sūti e-pastu.</span>
         </div>
         <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-start gap-2.5">
           <span class="bg-seoulBlue text-white font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0">3</span>
@@ -156,12 +156,11 @@
       });
     });
 
-    // Extraer Categorías
     function setupCategories() {
       const categoriesSet = new Set();
       allData.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (key.toLowerCase().includes('kategorij') && row[key]) {
+          if ((key.toLowerCase().includes('kategorij') || key.toLowerCase().includes('pakalpojum')) && row[key]) {
             row[key].split(',').forEach(c => categoriesSet.add(c.trim()));
           }
         });
@@ -179,7 +178,6 @@
       });
     }
 
-    // Extraer Idiomas
     function setupLanguages() {
       const languagesSet = new Set();
       allData.forEach(row => {
@@ -205,11 +203,7 @@
     function setCategory(cat) {
       selectedCategory = cat;
       document.querySelectorAll('.cat-btn').forEach(btn => {
-        if (btn.textContent === cat) {
-          btn.classList.add('badge-active');
-        } else {
-          btn.classList.remove('badge-active');
-        }
+        btn.classList.toggle('badge-active', btn.textContent === cat);
       });
       filterData();
     }
@@ -217,16 +211,11 @@
     function setLanguage(lang) {
       selectedLanguage = lang;
       document.querySelectorAll('.lang-btn').forEach(btn => {
-        if (btn.textContent === lang) {
-          btn.classList.add('badge-active');
-        } else {
-          btn.classList.remove('badge-active');
-        }
+        btn.classList.toggle('badge-active', btn.textContent === lang);
       });
       filterData();
     }
 
-    // Filtrar Perfiles
     function filterData() {
       const query = document.getElementById('searchInput').value.toLowerCase();
       
@@ -234,21 +223,17 @@
         const fullText = Object.values(item).join(' ').toLowerCase();
         const matchesQuery = fullText.includes(query);
 
-        let matchesCat = false;
-        if (selectedCategory === 'Visi') {
-          matchesCat = true;
-        } else {
+        let matchesCat = (selectedCategory === 'Visi');
+        if (!matchesCat) {
           Object.keys(item).forEach(key => {
-            if (key.toLowerCase().includes('kategorij') && item[key] && item[key].includes(selectedCategory)) {
+            if ((key.toLowerCase().includes('kategorij') || key.toLowerCase().includes('pakalpojum')) && item[key] && item[key].includes(selectedCategory)) {
               matchesCat = true;
             }
           });
         }
 
-        let matchesLang = false;
-        if (selectedLanguage === 'Visas') {
-          matchesLang = true;
-        } else {
+        let matchesLang = (selectedLanguage === 'Visas');
+        if (!matchesLang) {
           Object.keys(item).forEach(key => {
             if (key.toLowerCase().includes('valod') && item[key] && item[key].includes(selectedLanguage)) {
               matchesLang = true;
@@ -262,7 +247,19 @@
       renderProfiles(filtered);
     }
 
-    // Renderizar Tarjetas con 3 botones de contacto
+    // Búsqueda ultrarrobusta de columnas
+    function findValue(row, keywords) {
+      for (const key of Object.keys(row)) {
+        const cleanKey = key.toLowerCase();
+        for (const kw of keywords) {
+          if (cleanKey.includes(kw.toLowerCase())) {
+            return row[key] ? row[key].trim() : '';
+          }
+        }
+      }
+      return '';
+    }
+
     function renderProfiles(data) {
       const container = document.getElementById('profilesGrid');
       const noResults = document.getElementById('noResults');
@@ -276,17 +273,20 @@
       }
 
       data.forEach(item => {
-        const name = findValue(item, ['vārds', 'uzvārds', 'nombre']) || 'Jaunietis';
-        const phone = findValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone']) || '';
-        const email = findValue(item, ['e-pasts', 'epasts', 'mail']) || '';
-        const location = findValue(item, ['apkaime', 'pilsēta', 'zona']) || 'Rīga';
-        const description = findValue(item, ['apraksts', 'prasme', 'darb']) || '';
-        const photoUrl = findValue(item, ['foto', 'bilde', 'saite']) || '';
+        // Palabras clave extendidas para capturar los encabezados de Google Forms
+        const name = findValue(item, ['vārds', 'uzvārds', 'nombre', 'name']) || 'Jaunietis';
+        const phone = findValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone', 'numurs', 'mob']) || '';
+        const email = findValue(item, ['e-pasts', 'epasts', 'mail', 'pasta']) || '';
+        const location = findValue(item, ['apkaime', 'pilsēta', 'zona', 'vieta']) || 'Rīga';
+        const description = findValue(item, ['apraksts', 'prasme', 'darb', 'detalizēts', 'piedāvā']) || '';
+        const photoUrl = findValue(item, ['foto', 'bilde', 'saite', 'url', 'image']) || '';
         const languages = findValue(item, ['valod', 'idiomas']) || '';
-        const availability = findValue(item, ['pieejamīb', 'laiks']) || '';
+        const availability = findValue(item, ['pieejamīb', 'laiks', 'darba']) || '';
 
+        // Limpiar número de teléfono
         const cleanPhone = phone.replace(/[^0-9]/g, '');
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : '';
+        const telLink = cleanPhone ? `tel:+${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : (phone ? `tel:${phone}` : '');
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition';
@@ -314,10 +314,10 @@
             </div>
           </div>
 
-          <!-- BOTONES DE CONTACTO (TELÉFONO, WHATSAPP, EMAIL) -->
+          <!-- BOTONES DE CONTACTO -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-2">
             ${phone ? `
-              <a href="tel:${phone}" class="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs md:text-sm font-bold py-2.5 px-2 rounded-xl transition">
+              <a href="${telLink}" class="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs md:text-sm font-bold py-2.5 px-2 rounded-xl transition">
                 <i class="fa-solid fa-phone text-seoulBlue"></i> Zvanīt
               </a>
             ` : ''}
@@ -336,17 +336,6 @@
 
         container.appendChild(card);
       });
-    }
-
-    function findValue(row, keywords) {
-      for (const key of Object.keys(row)) {
-        for (const kw of keywords) {
-          if (key.toLowerCase().includes(kw.toLowerCase())) {
-            return row[key];
-          }
-        }
-      }
-      return '';
     }
   </script>
 </body>
