@@ -160,7 +160,7 @@
       const categoriesSet = new Set();
       allData.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (isCategoryColumn(key) && row[key]) {
+          if ((key.toLowerCase().includes('kategorij') || key.toLowerCase().includes('pakalpojum')) && row[key]) {
             row[key].split(',').forEach(c => categoriesSet.add(c.trim()));
           }
         });
@@ -200,16 +200,6 @@
       });
     }
 
-    function isCategoryColumn(key) {
-      const k = key.toLowerCase();
-      return (k.includes('kategorij') || k.includes('pakalpojum')) && !k.includes('apraksts') && !k.includes('detalizēt');
-    }
-
-    function isDescriptionColumn(key) {
-      const k = key.toLowerCase();
-      return k.includes('apraksts') || k.includes('prasme') || k.includes('detalizēt') || k.includes('darb');
-    }
-
     function setCategory(cat) {
       selectedCategory = cat;
       document.querySelectorAll('.cat-btn').forEach(btn => {
@@ -236,10 +226,117 @@
         let matchesCat = (selectedCategory === 'Visi');
         if (!matchesCat) {
           Object.keys(item).forEach(key => {
-            if (isCategoryColumn(key) && item[key] && item[key].includes(selectedCategory)) {
+            if ((key.toLowerCase().includes('kategorij') || key.toLowerCase().includes('pakalpojum')) && item[key] && item[key].includes(selectedCategory)) {
               matchesCat = true;
             }
           });
         }
 
-                                      
+        let matchesLang = (selectedLanguage === 'Visas');
+        if (!matchesLang) {
+          Object.keys(item).forEach(key => {
+            if (key.toLowerCase().includes('valod') && item[key] && item[key].includes(selectedLanguage)) {
+              matchesLang = true;
+            }
+          });
+        }
+
+        return matchesQuery && matchesCat && matchesLang;
+      });
+
+      renderProfiles(filtered);
+    }
+
+    // Búsqueda ultrarrobusta de columnas
+    function findValue(row, keywords) {
+      for (const key of Object.keys(row)) {
+        const cleanKey = key.toLowerCase();
+        for (const kw of keywords) {
+          if (cleanKey.includes(kw.toLowerCase())) {
+            return row[key] ? row[key].trim() : '';
+          }
+        }
+      }
+      return '';
+    }
+
+    function renderProfiles(data) {
+      const container = document.getElementById('profilesGrid');
+      const noResults = document.getElementById('noResults');
+      container.innerHTML = '';
+
+      if (data.length === 0) {
+        noResults.classList.remove('hidden');
+        return;
+      } else {
+        noResults.classList.add('hidden');
+      }
+
+      data.forEach(item => {
+        // Palabras clave extendidas para capturar los encabezados de Google Forms
+        const name = findValue(item, ['vārds', 'uzvārds', 'nombre', 'name']) || 'Jaunietis';
+        const phone = findValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone', 'numurs', 'mob']) || '';
+        const email = findValue(item, ['e-pasts', 'epasts', 'mail', 'pasta']) || '';
+        const location = findValue(item, ['apkaime', 'pilsēta', 'zona', 'vieta']) || 'Rīga';
+        const description = findValue(item, ['apraksts', 'prasme', 'darb', 'detalizēts', 'piedāvā']) || '';
+        const photoUrl = findValue(item, ['foto', 'bilde', 'saite', 'url', 'image']) || '';
+        const languages = findValue(item, ['valod', 'idiomas']) || '';
+        const availability = findValue(item, ['pieejamīb', 'laiks', 'darba']) || '';
+
+        // Limpiar número de teléfono
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : '';
+        const telLink = cleanPhone ? `tel:+${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : (phone ? `tel:${phone}` : '');
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-4 mb-4">
+              <img src="${photoUrl || 'https://via.placeholder.com/150/0B5ED7/FFFFFF?text=Seula+2027'}" 
+                   alt="${name}" 
+                   class="w-20 h-20 rounded-full object-cover border-2 border-seoulYellow flex-shrink-0"
+                   onerror="this.src='https://via.placeholder.com/150/0B5ED7/FFFFFF?text=Seula+2027'">
+              <div>
+                <h3 class="font-bold text-xl text-seoulDark leading-tight">${name}</h3>
+                <p class="text-sm text-seoulBlue font-medium flex items-center gap-1.5 mt-1">
+                  <i class="fa-solid fa-location-dot"></i> ${location}
+                </p>
+              </div>
+            </div>
+
+            ${description ? `<p class="text-sm md:text-base text-gray-700 mb-4 bg-gray-50 p-3.5 rounded-xl border border-gray-100">${description}</p>` : ''}
+
+            <div class="space-y-1.5 mb-5 text-sm text-gray-600">
+              ${languages ? `<p><strong class="text-gray-800">Valodas:</strong> ${languages}</p>` : ''}
+              ${availability ? `<p><strong class="text-gray-800">Pieejamība:</strong> ${availability}</p>` : ''}
+            </div>
+          </div>
+
+          <!-- BOTONES DE CONTACTO -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-2">
+            ${phone ? `
+              <a href="${telLink}" class="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs md:text-sm font-bold py-2.5 px-2 rounded-xl transition">
+                <i class="fa-solid fa-phone text-seoulBlue"></i> Zvanīt
+              </a>
+            ` : ''}
+            ${waLink ? `
+              <a href="${waLink}" target="_blank" class="flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs md:text-sm font-bold py-2.5 px-2 rounded-xl transition">
+                <i class="fa-brands fa-whatsapp text-base"></i> WhatsApp
+              </a>
+            ` : ''}
+            ${email ? `
+              <a href="mailto:${email}" class="flex items-center justify-center gap-1.5 bg-seoulBlue hover:bg-blue-700 text-white text-xs md:text-sm font-bold py-2.5 px-2 rounded-xl transition">
+                <i class="fa-solid fa-envelope"></i> E-pasts
+              </a>
+            ` : ''}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
