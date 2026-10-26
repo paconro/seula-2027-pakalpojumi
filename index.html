@@ -299,10 +299,7 @@
 
       data.forEach(item => {
         const name = getFieldValue(item, ['vārds', 'uzvārds', 'nombre', 'name']) || Object.values(item)[1] || 'Jaunietis';
-        
-        // Búsqueda ampliada para la edad (vecums, gadu, cik, gads, edad, age, vec)
         const ageRaw = getFieldValue(item, ['vecums', 'gadu', 'cik', 'gads', 'edad', 'age', 'vec']);
-        
         const phone = getFieldValue(item, ['tālruņ', 'telefons', 'telēfons', 'phone', 'numurs', 'mob', 'telefon']);
         const email = getFieldValue(item, ['e-pasts', 'epasts', 'mail', 'pasta']);
         const location = getFieldValue(item, ['apkaime', 'pilsēta', 'zona', 'vieta']) || 'Rīga';
@@ -317,13 +314,15 @@
           if (isDescriptionColumn(k)) description = item[k];
         });
 
-        const photoUrl = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
+        // Validación estricta para la URL de la foto (debe empezar por http)
+        const rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
+        const photoUrl = (rawPhoto && rawPhoto.startsWith('http')) ? rawPhoto : '';
+
         const languages = getFieldValue(item, ['valod', 'idiomas']);
         const availability = getFieldValue(item, ['pieejamīb', 'laiks', 'darba']);
 
         const serviceList = categoriesRaw ? categoriesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
 
-        // Formatear edad correctamente con la palabra 'gadi' o 'gads'
         let ageDisplay = '';
         if (ageRaw) {
           const cleanAge = ageRaw.replace(/[^0-9]/g, '');
