@@ -316,6 +316,7 @@
 
         // Procesar URL de la foto (soporta tanto URLs completas como rutas relativas tipo assets/foto.jpg)
         const rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
+        console.log("Joven:", name, "| URL de foto leída:", rawPhoto);
         let photoUrl = '';
         if (rawPhoto) {
           if (rawPhoto.startsWith('http')) {
