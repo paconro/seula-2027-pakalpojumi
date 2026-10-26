@@ -314,9 +314,16 @@
           if (isDescriptionColumn(k)) description = item[k];
         });
 
-        // Validación estricta para la URL de la foto (debe empezar por http)
+        // Procesar URL de la foto (soporta tanto URLs completas como rutas relativas tipo assets/foto.jpg)
         const rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
-        const photoUrl = (rawPhoto && rawPhoto.startsWith('http')) ? rawPhoto : '';
+        let photoUrl = '';
+        if (rawPhoto) {
+          if (rawPhoto.startsWith('http')) {
+            photoUrl = rawPhoto;
+          } else {
+            photoUrl = rawPhoto.startsWith('/') ? rawPhoto : './' + rawPhoto;
+          }
+        }
 
         const languages = getFieldValue(item, ['valod', 'idiomas']);
         const availability = getFieldValue(item, ['pieejamīb', 'laiks', 'darba']);
