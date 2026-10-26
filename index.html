@@ -314,11 +314,13 @@
           if (isDescriptionColumn(k)) description = item[k];
         });
 
-        // Procesar URL de la foto (soporta tanto URLs completas como rutas relativas tipo assets/foto.jpg)
-        const rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
-        console.log("Joven:", name, "| URL de foto leída:", rawPhoto);
+        // Procesar URL de la foto y auto-convertir enlaces tipo github.com/.../blob/... a raw
+        let rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
         let photoUrl = '';
         if (rawPhoto) {
+          if (rawPhoto.includes('github.com') && rawPhoto.includes('/blob/')) {
+            rawPhoto = rawPhoto.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+          }
           if (rawPhoto.startsWith('http')) {
             photoUrl = rawPhoto;
           } else {
