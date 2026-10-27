@@ -342,10 +342,13 @@
           }
         }
 
-        // Limpieza de teléfono: conserva el signo '+' inicial si lo hay, y elimina espacios/guiones/paréntesis intermedios
-        const cleanPhone = phone ? phone.trim().replace(/[\s\-\(\)]/g, '') : '';
-        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : '';
-        const telLink = cleanPhone ? `tel:${cleanPhone}` : '';
+        // --- GESTIÓN DE TELÉFONOS (SIN AÑADIR NINGÚN 371 FORZADO) ---
+        const rawPhone = phone ? phone.trim() : '';
+        // Para llamada: Permite '+' y números, limpia espacios/guiones
+        const telLink = rawPhone ? `tel:${rawPhone.replace(/[\s\-\(\)]/g, '')}` : '';
+        // Para WhatsApp: Extrae únicamente los dígitos puros (ej: 393929979699)
+        const waDigits = rawPhone.replace(/\D/g, '');
+        const waLink = waDigits ? `https://wa.me/${waDigits}` : '';
 
         const isLongDesc = description && description.length > 130;
         const shortDesc = isLongDesc ? description.substring(0, 130) + '...' : description;
