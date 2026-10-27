@@ -314,11 +314,10 @@
           if (isDescriptionColumn(k)) description = item[k];
         });
 
-        // Procesar URL de la foto y auto-convertir enlaces tipo github.com/.../blob/... a raw
         let rawPhoto = getFieldValue(item, ['foto', 'bilde', 'saite', 'url', 'image']);
         let photoUrl = '';
         if (rawPhoto) {
-          if (rawPhoto.includes('github.com') && rawPhoto.includes('/blob/')) {
+          if (rawPhoto.includes('github.com')) {
             rawPhoto = rawPhoto.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
           }
           if (rawPhoto.startsWith('http')) {
@@ -343,9 +342,10 @@
           }
         }
 
-        const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
-        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : '';
-        const telLink = cleanPhone ? `tel:+${cleanPhone.startsWith('371') ? cleanPhone : '371' + cleanPhone}` : (phone ? `tel:${phone}` : '');
+        // Limpieza de teléfono: conserva el signo '+' inicial si lo hay, y elimina espacios/guiones/paréntesis intermedios
+        const cleanPhone = phone ? phone.trim().replace(/[\s\-\(\)]/g, '') : '';
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : '';
+        const telLink = cleanPhone ? `tel:${cleanPhone}` : '';
 
         const isLongDesc = description && description.length > 130;
         const shortDesc = isLongDesc ? description.substring(0, 130) + '...' : description;
